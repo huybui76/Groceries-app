@@ -1,15 +1,11 @@
-import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, SafeAreaView, Image, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { myColors } from '../Utils/MyColors';
+import React, { useState } from 'react';
+import { Text, View, StyleSheet, SafeAreaView, Image, ScrollView, TextInput, TouchableOpacity, Alert, StatusBar } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { authentication, database } from '../../Firebaseconfig';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { setDoc, doc } from 'firebase/firestore';
-import uuid from 'react-native-uuid';
-
-interface SignProps { }
+import { myColors } from '../Utils/MyColors';
 
 const Sign = () => {
     const [userCre, setUserCre] = useState({
@@ -21,7 +17,12 @@ const Sign = () => {
     const [hindPass, setHindPass] = useState(true);
     const nav = useNavigation();
 
-    const userAuth = async () => {
+    const handleSignUp = async () => {
+        if (password.length < 6) {
+            Alert.alert('Password must be at least 6 characters long.');
+            return;
+        }
+
         try {
             const userCredential = await createUserWithEmailAndPassword(authentication, email, password);
             const user = userCredential.user;
@@ -36,16 +37,25 @@ const Sign = () => {
                 id: uid,
             });
 
-            Alert.alert('User account created & signed in!');
+            // Alert.alert('User account created & signed in!');
+            nav.navigate('Login');
         } catch (error) {
-            if (error.code === 'auth/email-already-in-use') {
+            handleError(error);
+        }
+    };
+
+    const handleError = (error) => {
+        switch (error.code) {
+            case 'auth/email-already-in-use':
                 Alert.alert('That email address is already in use!');
-            } else if (error.code === 'auth/invalid-email') {
+                break;
+            case 'auth/invalid-email':
                 Alert.alert('That email address is invalid!');
-            } else {
+                break;
+            default:
                 Alert.alert('An error occurred. Please try again later.');
-            }
-            console.error(error);
+                console.error(error);
+                break;
         }
     };
 
@@ -80,7 +90,8 @@ const Sign = () => {
                             onChangeText={(val) => { setUserCre({ ...userCre, password: val }) }}
                             secureTextEntry={hindPass}
                             keyboardType="ascii-capable"
-                            maxLength={6}
+                            maxLength={10}
+
                             style={styles.TextInput2} />
                         <MaterialCommunityIcons
                             name={hindPass == true ? "eye-off-outline" : "eye-outline"}
@@ -93,7 +104,7 @@ const Sign = () => {
                     </Text>
                     <TouchableOpacity
                         style={styles.signButton}
-                        onPress={() => { userAuth() }}>
+                        onPress={() => { handleSignUp() }}>
                         <Text style={styles.signButton1}>
                             Sign Up
                         </Text>
